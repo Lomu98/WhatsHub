@@ -1,0 +1,134 @@
+@import 'tailwindcss';
+
+/* ---------------------------------------------------------------------------
+   Design tokens WhatsHub
+   Palette: superficie zinc molto scura + accento verde WhatsApp.
+   La dashboard è dark-only: è un pannello di controllo, non un sito pubblico.
+--------------------------------------------------------------------------- */
+@theme {
+  --color-surface-0: #09090b;
+  --color-surface-1: #111113;
+  --color-surface-2: #18181b;
+  --color-surface-3: #242428;
+  --color-border-subtle: #27272a;
+
+  --color-accent: #25d366;
+  --color-accent-dark: #12a150;
+  --color-accent-soft: #0d3320;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-surface-0);
+  color: #e4e4e7;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar coerente con il tema */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-surface-1);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-surface-3);
+  border-radius: 9999px;
+  border: 2px solid var(--color-surface-1);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl border border-zinc-800 bg-[var(--color-surface-1)] shadow-sm;
+  }
+
+  .card-header {
+    @apply flex items-center justify-between gap-3 border-b border-zinc-800 px-5 py-4;
+  }
+
+  /* In Tailwind v4 `@apply` accetta solo utility reali, non altre classi
+     custom: la base dei bottoni va quindi condivisa via selettore, non con
+     `@apply btn` dentro le varianti. */
+  .btn,
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost,
+  .btn-danger {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg px-3.5 py-2
+           text-sm font-medium transition-colors duration-150 disabled:cursor-not-allowed
+           disabled:opacity-50 focus:outline-none focus-visible:ring-2
+           focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2
+           focus-visible:ring-offset-[var(--color-surface-0)];
+  }
+
+  .btn-primary {
+    @apply bg-[var(--color-accent)] text-zinc-950 hover:bg-[var(--color-accent-dark)] hover:text-white;
+  }
+
+  .btn-secondary {
+    @apply border border-zinc-700 bg-[var(--color-surface-2)] text-zinc-200 hover:bg-[var(--color-surface-3)];
+  }
+
+  .btn-ghost {
+    @apply text-zinc-400 hover:bg-[var(--color-surface-2)] hover:text-zinc-100;
+  }
+
+  .btn-danger {
+    @apply border border-red-900/60 bg-red-950/40 text-red-300 hover:bg-red-900/40 hover:text-red-200;
+  }
+
+  .input {
+    @apply w-full rounded-lg border border-zinc-700 bg-[var(--color-surface-2)] px-3 py-2 text-sm
+           text-zinc-100 placeholder:text-zinc-600 transition-colors
+           focus:border-[var(--color-accent)] focus:outline-none focus:ring-1
+           focus:ring-[var(--color-accent)];
+  }
+
+  .label {
+    @apply mb-1.5 block text-xs font-medium uppercase tracking-wide text-zinc-400;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  .table-wrap {
+    @apply w-full overflow-x-auto;
+  }
+
+  .th {
+    @apply whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500;
+  }
+
+  .td {
+    @apply px-4 py-3 text-sm text-zinc-300;
+  }
+}
+
+/* Animazione del pallino "live" */
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgb(37 211 102 / 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgb(37 211 102 / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(37 211 102 / 0);
+  }
+}
+
+.live-dot {
+  animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

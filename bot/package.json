@@ -1,0 +1,32 @@
+{
+  "name": "@whatshub/bot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WhatsHub — WhatsApp group bot (whatsapp-web.js + Firebase RTDB)",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch --clear-screen=false src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "setup:firebase": "node scripts/import-service-account.mjs",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
+    "session:reset": "node -e \"require('fs').rmSync('.wwebjs_auth',{recursive:true,force:true});require('fs').rmSync('.wwebjs_cache',{recursive:true,force:true});console.log('Sessione WhatsApp azzerata.')\""
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "firebase-admin": "^13.2.0",
+    "node-cron": "^3.0.3",
+    "qrcode": "^1.5.4",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.26.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@types/node-cron": "^3.0.11",
+    "@types/qrcode": "^1.5.5",
+    "@types/qrcode-terminal": "^0.12.2",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3"
+  }
+}

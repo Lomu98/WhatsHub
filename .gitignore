@@ -1,0 +1,46 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# builds
+dist/
+build/
+.next/
+out/
+
+# env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# firebase credentials — MAI committare
+serviceAccountKey.json
+firebase-service-account*.json
+*-firebase-adminsdk-*.json
+
+# sessione WhatsApp (contiene le credenziali del tuo account!)
+.wwebjs_auth/
+.wwebjs_cache/
+bot/.wwebjs_auth/
+bot/.wwebjs_cache/
+session*/
+
+# logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# os / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# misc
+*.tsbuildinfo
+coverage/

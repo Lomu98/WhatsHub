@@ -1,0 +1,12 @@
+{
+  "_commento": [
+    "REGOLE PER SVILUPPO LOCALE — accesso completamente aperto.",
+    "Chiunque conosca l'URL del database puo' leggere e scrivere tutto.",
+    "Usale solo mentre lavori su localhost, MAI con la dashboard pubblicata online.",
+    "Quando pubblichi, torna a database.rules.json (che richiede autenticazione)."
+  ],
+  "rules": {
+    ".read": true,
+    ".write": true
+  }
+}

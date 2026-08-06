@@ -1,0 +1,51 @@
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
+
+    "bot_status": {
+      ".read": "auth != null",
+      ".write": "auth.token.admin === true"
+    },
+    "builtin_commands": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "commands": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$commandId": {
+        ".validate": "newData.hasChildren(['trigger', 'responseType', 'enabled'])",
+        "trigger": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40" },
+        "description": { ".validate": "newData.isString() && newData.val().length <= 200" },
+        "responseType": { ".validate": "newData.val() === 'static' || newData.val() === 'script'" },
+        "responseText": { ".validate": "newData.isString() && newData.val().length <= 4000" },
+        "enabled": { ".validate": "newData.isBoolean()" },
+        "$other": { ".validate": true }
+      }
+    },
+    "groups": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "birthdays": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$userId": {
+        "date": { ".validate": "newData.isString() && newData.val().matches(/^[0-3][0-9]-[0-1][0-9]$/)" }
+      }
+    },
+    "events": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "logs": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "config": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    }
+  }
+}
