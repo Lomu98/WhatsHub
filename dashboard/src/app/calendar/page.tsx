@@ -83,7 +83,7 @@ export default function CalendarPage() {
                         </span>
                       </p>
                     </div>
-                    <div className="flex shrink-0 gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                    <div className="flex shrink-0 gap-1 opacity-100 transition-opacity lg:opacity-0 lg:group-hover:opacity-100">
                       <button
                         type="button"
                         className="btn-ghost p-1.5"

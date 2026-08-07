@@ -79,7 +79,7 @@ export function QuotesCard({ groupId, quotes }: { groupId: string; quotes: Quote
                   </div>
                   <button
                     type="button"
-                    className="btn-ghost p-1.5 opacity-0 transition-opacity hover:text-red-400 group-hover:opacity-100"
+                    className="btn-ghost p-1.5 opacity-100 transition-opacity hover:text-red-400 lg:opacity-0 lg:group-hover:opacity-100"
                     aria-label="Elimina citazione"
                     onClick={() => {
                       if (window.confirm('Eliminare questa citazione?')) {

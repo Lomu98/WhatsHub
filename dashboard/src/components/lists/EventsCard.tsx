@@ -65,7 +65,7 @@ export function EventsCard({ groupId, events }: { groupId: string; events: Calen
                     <p className="mt-1 line-clamp-2 text-xs text-zinc-600">{event.description}</p>
                   ) : null}
                 </div>
-                <div className="flex shrink-0 gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                <div className="flex shrink-0 gap-1 opacity-100 transition-opacity lg:opacity-0 lg:group-hover:opacity-100">
                   <button
                     type="button"
                     className="btn-ghost p-1.5"

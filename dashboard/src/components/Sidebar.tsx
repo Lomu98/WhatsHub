@@ -9,6 +9,7 @@ import {
   LogOut,
   ScrollText,
   Terminal,
+  X,
 } from 'lucide-react';
 import { signOutUser } from '@/lib/auth';
 import { useRealtimeValue } from '@/lib/hooks/useRealtime';
@@ -23,72 +24,99 @@ const NAV = [
   { href: '/logs', label: 'Log & Audit', icon: ScrollText, description: 'Comandi eseguiti' },
 ] as const;
 
-export function Sidebar() {
+export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const pathname = usePathname();
   const { data: status } = useRealtimeValue<BotStatus | null>('bot_status', null);
   const presence = botPresence(status);
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-zinc-800 bg-[var(--color-surface-1)]">
-      <div className="flex items-center gap-3 border-b border-zinc-800 px-5 py-5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--color-accent)] text-lg font-bold text-zinc-950">
-          W
-        </div>
-        <div>
-          <p className="text-sm font-semibold tracking-tight text-zinc-100">WhatsHub</p>
-          <p className="text-xs text-zinc-500">Admin dashboard</p>
-        </div>
-      </div>
+    <>
+      {/* Overlay: solo sotto lg, solo quando aperta. Tap per chiudere. */}
+      {open ? (
+        <div
+          className="fixed inset-0 z-30 bg-black/60 lg:hidden"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      ) : null}
 
-      <nav className="flex-1 space-y-1 p-3">
-        {NAV.map((item) => {
-          const active = pathname === item.href;
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cx(
-                'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors',
-                active
-                  ? 'bg-[var(--color-accent-soft)] text-[var(--color-accent)]'
-                  : 'text-zinc-400 hover:bg-[var(--color-surface-2)] hover:text-zinc-100',
-              )}
-            >
-              <Icon size={18} className="shrink-0" />
-              <span className="flex-1 font-medium">{item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
-
-      <div className="border-t border-zinc-800 p-4">
-        <div className="flex items-center gap-2.5 rounded-lg bg-[var(--color-surface-2)] px-3 py-2.5">
-          <span
-            className={cx(
-              'h-2.5 w-2.5 shrink-0 rounded-full',
-              presence === 'online' && 'live-dot bg-[var(--color-accent)]',
-              presence === 'connecting' && 'animate-pulse bg-amber-400',
-              presence === 'offline' && 'bg-red-500',
-            )}
-          />
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-zinc-200">
-              {presenceLabel(presence, status?.state)}
-            </p>
-            <p className="truncate text-[11px] text-zinc-500">
-              {status?.pushName ?? status?.message ?? 'in attesa di connessione'}
-            </p>
+      <aside
+        className={cx(
+          'fixed inset-y-0 left-0 z-40 flex h-full w-72 shrink-0 flex-col border-r border-zinc-800',
+          'bg-[var(--color-surface-1)] transition-transform duration-200 ease-out',
+          'lg:static lg:z-auto lg:w-64 lg:translate-x-0',
+          open ? 'translate-x-0' : '-translate-x-full',
+        )}
+      >
+        <div className="flex items-center gap-3 border-b border-zinc-800 px-5 py-5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--color-accent)] text-lg font-bold text-zinc-950">
+            W
           </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold tracking-tight text-zinc-100">WhatsHub</p>
+            <p className="text-xs text-zinc-500">Admin dashboard</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Chiudi il menu"
+            className="btn-ghost p-1.5 lg:hidden"
+          >
+            <X size={18} />
+          </button>
         </div>
-        <button
-          onClick={() => void signOutUser()}
-          className="mt-2 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs text-zinc-500 transition-colors hover:bg-[var(--color-surface-2)] hover:text-zinc-200"
-        >
-          <LogOut size={14} />
-          Esci
-        </button>
-      </div>
-    </aside>
+
+        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+          {NAV.map((item) => {
+            const active = pathname === item.href;
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onClose}
+                className={cx(
+                  'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors',
+                  active
+                    ? 'bg-[var(--color-accent-soft)] text-[var(--color-accent)]'
+                    : 'text-zinc-400 hover:bg-[var(--color-surface-2)] hover:text-zinc-100',
+                )}
+              >
+                <Icon size={18} className="shrink-0" />
+                <span className="flex-1 font-medium">{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="border-t border-zinc-800 p-4">
+          <div className="flex items-center gap-2.5 rounded-lg bg-[var(--color-surface-2)] px-3 py-2.5">
+            <span
+              className={cx(
+                'h-2.5 w-2.5 shrink-0 rounded-full',
+                presence === 'online' && 'live-dot bg-[var(--color-accent)]',
+                presence === 'connecting' && 'animate-pulse bg-amber-400',
+                presence === 'offline' && 'bg-red-500',
+              )}
+            />
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-zinc-200">
+                {presenceLabel(presence, status?.state)}
+              </p>
+              <p className="truncate text-[11px] text-zinc-500">
+                {status?.pushName ?? status?.message ?? 'in attesa di connessione'}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => void signOutUser()}
+            className="mt-2 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs text-zinc-500 transition-colors hover:bg-[var(--color-surface-2)] hover:text-zinc-200"
+          >
+            <LogOut size={14} />
+            Esci
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }

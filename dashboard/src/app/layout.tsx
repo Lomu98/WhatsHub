@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
+import { AppShell } from '@/components/AppShell';
 import { AuthGate } from '@/components/AuthGate';
-import { Sidebar } from '@/components/Sidebar';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -20,12 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       */}
       <body className="min-h-screen" suppressHydrationWarning>
         <AuthGate>
-          <div className="flex h-screen overflow-hidden">
-            <Sidebar />
-            <main className="flex-1 overflow-y-auto">
-              <div className="mx-auto max-w-7xl px-6 py-8">{children}</div>
-            </main>
-          </div>
+          <AppShell>{children}</AppShell>
         </AuthGate>
       </body>
     </html>
