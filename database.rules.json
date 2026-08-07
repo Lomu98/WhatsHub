@@ -1,19 +1,19 @@
 {
   "rules": {
-    ".read": "auth != null",
-    ".write": "auth != null",
+    ".read": "auth != null && auth.token.email === 'andrea.lomurno@gmail.com'",
+    ".write": "auth != null && auth.token.email === 'andrea.lomurno@gmail.com'",
 
     "bot_status": {
-      ".read": "auth != null",
+      ".read": "auth != null && auth.token.email === 'andrea.lomurno@gmail.com'",
       ".write": "auth.token.admin === true"
     },
     "builtin_commands": {
-      ".read": "auth != null",
-      ".write": "auth != null"
+      ".read": "auth != null && auth.token.email === 'andrea.lomurno@gmail.com'",
+      ".write": "auth != null && auth.token.email === 'andrea.lomurno@gmail.com'"
     },
     "commands": {
-      ".read": "auth != null",
-      ".write": "auth != null",
+      ".read": "auth != null && auth.token.email === 'andrea.lomurno@gmail.com'",
+      ".write": "auth != null && auth.token.email === 'andrea.lomurno@gmail.com'",
       "$commandId": {
         ".validate": "newData.hasChildren(['trigger', 'responseType', 'enabled'])",
         "trigger": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40" },
@@ -25,27 +25,27 @@
       }
     },
     "groups": {
-      ".read": "auth != null",
-      ".write": "auth != null"
+      ".read": "auth != null && auth.token.email === 'andrea.lomurno@gmail.com'",
+      ".write": "auth != null && auth.token.email === 'andrea.lomurno@gmail.com'"
     },
     "birthdays": {
-      ".read": "auth != null",
-      ".write": "auth != null",
+      ".read": "auth != null && auth.token.email === 'andrea.lomurno@gmail.com'",
+      ".write": "auth != null && auth.token.email === 'andrea.lomurno@gmail.com'",
       "$userId": {
         "date": { ".validate": "newData.isString() && newData.val().matches(/^[0-3][0-9]-[0-1][0-9]$/)" }
       }
     },
     "events": {
-      ".read": "auth != null",
-      ".write": "auth != null"
+      ".read": "auth != null && auth.token.email === 'andrea.lomurno@gmail.com'",
+      ".write": "auth != null && auth.token.email === 'andrea.lomurno@gmail.com'"
     },
     "logs": {
-      ".read": "auth != null",
-      ".write": "auth != null"
+      ".read": "auth != null && auth.token.email === 'andrea.lomurno@gmail.com'",
+      ".write": "auth != null && auth.token.email === 'andrea.lomurno@gmail.com'"
     },
     "config": {
-      ".read": "auth != null",
-      ".write": "auth != null"
+      ".read": "auth != null && auth.token.email === 'andrea.lomurno@gmail.com'",
+      ".write": "auth != null && auth.token.email === 'andrea.lomurno@gmail.com'"
     }
   }
 }

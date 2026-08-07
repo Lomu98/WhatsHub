@@ -46,3 +46,7 @@ Thumbs.db
 # misc
 *.tsbuildinfo
 coverage/
+
+# cache locale della Firebase CLI
+.firebase/
+dashboard/out/

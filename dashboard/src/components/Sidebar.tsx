@@ -6,9 +6,11 @@ import {
   CalendarHeart,
   LayoutDashboard,
   ListTodo,
+  LogOut,
   ScrollText,
   Terminal,
 } from 'lucide-react';
+import { signOutUser } from '@/lib/auth';
 import { useRealtimeValue } from '@/lib/hooks/useRealtime';
 import type { BotStatus } from '@/lib/types';
 import { botPresence, cx, presenceLabel } from '@/lib/utils';
@@ -79,6 +81,13 @@ export function Sidebar() {
             </p>
           </div>
         </div>
+        <button
+          onClick={() => void signOutUser()}
+          className="mt-2 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs text-zinc-500 transition-colors hover:bg-[var(--color-surface-2)] hover:text-zinc-200"
+        >
+          <LogOut size={14} />
+          Esci
+        </button>
       </div>
     </aside>
   );
