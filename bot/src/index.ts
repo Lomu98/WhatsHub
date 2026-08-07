@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import type { ScheduledTask } from 'node-cron';
 import { env } from './config/env';
 import { registerMessageHandler } from './handlers/message.handler';
@@ -95,5 +97,22 @@ async function main(): Promise<void> {
 
 main().catch((error) => {
   log.error('Avvio fallito', error);
+
+  // Se il crash arriva dal ripristino del backup di sessione (presente ma
+  // illeggibile/non più coerente con quanto si aspetta whatsapp-web.js), il
+  // prossimo riavvio automatico di Railway ripeterebbe lo stesso errore
+  // all'infinito fino a esaurire i retry configurati. Meglio scartare subito
+  // il backup rotto: il riavvio successivo riparte da una sessione pulita
+  // (richiede un nuovo QR) invece di restare bloccato in crash loop.
+  if (error instanceof Error && /RemoteAuth-.*\.zip/.test(error.message)) {
+    const zipPath = path.join(env.bot.sessionPath, `RemoteAuth-${env.bot.clientId}.zip`);
+    try {
+      fs.rmSync(zipPath, { force: true });
+      log.warn(`Backup sessione rimosso dopo un ripristino fallito: ${zipPath}`);
+    } catch (cleanupError) {
+      log.error('Impossibile rimuovere il backup sessione corrotto', cleanupError);
+    }
+  }
+
   process.exit(1);
 });

@@ -22,7 +22,18 @@ export function createFileSessionStore(volumeDir: string, remoteAuthDataPath: st
 
   return {
     async sessionExists({ session }) {
-      return fs.existsSync(volumeZipPath(session));
+      // Non basta l'esistenza del path: un backup interrotto a metà (es. il
+      // processo ucciso durante `save()`) può lasciare un file da 0 byte, o un
+      // riferimento che poi risulta illeggibile. Meglio scoprirlo qui — dove
+      // significa solo "si riparte da un QR nuovo" — che lasciare che
+      // `extract()` fallisca più avanti, cosa che whatsapp-web.js non gestisce
+      // e che fa crashare l'intero processo.
+      try {
+        const stat = await fs.promises.stat(volumeZipPath(session));
+        return stat.size > 0;
+      } catch {
+        return false;
+      }
     },
     async save({ session }) {
       await fs.promises.copyFile(freshZipPath(session), volumeZipPath(session));
