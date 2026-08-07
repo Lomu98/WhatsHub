@@ -84,6 +84,24 @@ export function createWhatsAppClient(): Client {
         '--disable-dev-shm-usage',
         '--disable-accelerated-2d-canvas',
         '--no-first-run',
+        // Riduzione del footprint di memoria: su un container con RAM limitata
+        // Chromium può essere ucciso dall'OOM killer del kernel senza che
+        // Puppeteer se ne accorga — resta in attesa per sempre di risposte da
+        // un processo che non esiste più (nessun errore, nessun crash di Node,
+        // solo silenzio). Questi flag disattivano sottosistemi che WhatsApp
+        // Web headless non usa comunque.
+        '--disable-gpu',
+        '--disable-extensions',
+        '--disable-background-networking',
+        '--disable-default-apps',
+        '--disable-sync',
+        '--disable-translate',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--metrics-recording-only',
+        '--mute-audio',
+        '--no-default-browser-check',
       ],
     },
   });
@@ -134,6 +152,26 @@ export function attachPageDiagnostics(client: Client): void {
       if (message.type() !== 'error') return;
       if (reported++ > MAX_MESSAGES) return;
       log.warn(`[pagina] console.error: ${message.text().slice(0, 300)}`);
+    }) as never);
+
+    // Se il renderer crasha (tipicamente OOM killer del kernel su container con
+    // poca RAM) Puppeteer non lancia mai un errore: resta semplicemente in
+    // attesa per sempre di risposte da un processo che non esiste più, e il
+    // bot appare "online" senza fare nulla. Questi due agganci sono l'unico
+    // modo per accorgersene subito invece che dopo minuti di silenzio.
+    page.on('error', ((error: Error) => {
+      log.error(`[pagina] Renderer crashato: ${error?.message ?? String(error)}`);
+    }) as never);
+
+    const browser = (client as unknown as { pupBrowser?: {
+      on(event: string, handler: (payload: never) => void): void;
+    } }).pupBrowser;
+    browser?.on('disconnected', (() => {
+      log.error(
+        '[pagina] Browser disconnesso inaspettatamente — probabile crash di Chromium ' +
+          '(spesso OOM killer per RAM insufficiente sul container). Il bot resterà "online" ' +
+          'ma inattivo finché non viene riavviato.',
+      );
     }) as never);
 
     log.info('Diagnostica della pagina agganciata (errori del browser visibili qui)');
