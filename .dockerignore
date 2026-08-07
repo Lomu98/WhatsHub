@@ -11,8 +11,10 @@ firebase-service-account*.json
 *-firebase-adminsdk-*.json
 .wwebjs_auth/
 .wwebjs_cache/
+.wwebjs_profile/
 bot/.wwebjs_auth/
 bot/.wwebjs_cache/
+bot/.wwebjs_profile/
 logs/
 *.log
 *.tsbuildinfo

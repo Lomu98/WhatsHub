@@ -11,7 +11,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "setup:firebase": "node scripts/import-service-account.mjs",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
-    "session:reset": "node -e \"require('fs').rmSync('.wwebjs_auth',{recursive:true,force:true});require('fs').rmSync('.wwebjs_cache',{recursive:true,force:true});console.log('Sessione WhatsApp azzerata.')\""
+    "session:reset": "node -e \"require('fs').rmSync('.wwebjs_auth',{recursive:true,force:true});require('fs').rmSync('.wwebjs_cache',{recursive:true,force:true});require('fs').rmSync('.wwebjs_profile',{recursive:true,force:true});console.log('Sessione WhatsApp azzerata.')\""
   },
   "dependencies": {
     "dotenv": "^16.4.7",

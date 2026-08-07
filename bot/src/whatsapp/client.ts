@@ -1,4 +1,5 @@
-import { Client, LocalAuth } from 'whatsapp-web.js';
+import path from 'node:path';
+import { Client, RemoteAuth } from 'whatsapp-web.js';
 import qrcode from 'qrcode';
 import qrcodeTerminal from 'qrcode-terminal';
 import { env } from '../config/env';
@@ -11,8 +12,21 @@ import {
 } from '../services/status.service';
 import { createLogger } from '../utils/logger';
 import { phoneFromId } from '../utils/text';
+import { createFileSessionStore } from './sessionStore';
 
 const log = createLogger('whatsapp');
+
+/**
+ * Profilo Chromium: SEMPRE su disco locale/effimero, mai su `env.bot.sessionPath`
+ * (che su Railway è un volume di rete con IOPS limitati). WhatsApp Web scrive
+ * pesantemente su IndexedDB durante la sincronizzazione iniziale: tenerci
+ * sopra l'intero profilo saturava l'I/O abbastanza da bloccare il bot per
+ * minuti. `RemoteAuth` + `createFileSessionStore` separano le due cose: il
+ * profilo vive qui, e solo un backup compresso viene copiato su
+ * `env.bot.sessionPath` ogni `BACKUP_SYNC_INTERVAL_MS`.
+ */
+const REMOTE_AUTH_DATA_PATH = path.resolve(process.cwd(), '.wwebjs_profile');
+const BACKUP_SYNC_INTERVAL_MS = 5 * 60_000;
 
 /**
  * Aggancia una versione specifica di WhatsApp Web, scaricata dal repository
@@ -39,10 +53,14 @@ function webVersionOptions(): Record<string, unknown> {
 }
 
 export function createWhatsAppClient(): Client {
+  const store = createFileSessionStore(env.bot.sessionPath, REMOTE_AUTH_DATA_PATH);
+
   return new Client({
-    authStrategy: new LocalAuth({
+    authStrategy: new RemoteAuth({
       clientId: env.bot.clientId,
-      dataPath: env.bot.sessionPath,
+      dataPath: REMOTE_AUTH_DATA_PATH,
+      store,
+      backupSyncIntervalMs: BACKUP_SYNC_INTERVAL_MS,
     }),
     ...webVersionOptions(),
     puppeteer: {

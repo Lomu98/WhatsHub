@@ -23,8 +23,10 @@ firebase-service-account*.json
 # sessione WhatsApp (contiene le credenziali del tuo account!)
 .wwebjs_auth/
 .wwebjs_cache/
+.wwebjs_profile/
 bot/.wwebjs_auth/
 bot/.wwebjs_cache/
+bot/.wwebjs_profile/
 session*/
 
 # logs
