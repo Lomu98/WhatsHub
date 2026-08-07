@@ -48,6 +48,13 @@ export function createWhatsAppClient(): Client {
     puppeteer: {
       headless: env.puppeteer.headless,
       executablePath: env.puppeteer.executablePath,
+      // Default puppeteer: 180s. Su storage lento (es. volumi di rete) la
+      // sincronizzazione iniziale della cronologia chat può saturare l'I/O di
+      // Chromium abbastanza a lungo da far scadere qualunque comando CDP nel
+      // frattempo — non solo l'inizializzazione, anche un banale invio di
+      // messaggio. Margine ampio apposta: si applica una tantum all'avvio,
+      // non rallenta l'uso normale.
+      protocolTimeout: 600_000,
       // Nota: `--no-zygote` e' stato rimosso di proposito. Cambia il modo in cui
       // Chromium gestisce i processi figli e provoca errori
       // "Protocol error: Target closed" quando puppeteer espone funzioni mentre
