@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import {
   Activity,
+  AlertTriangle,
   Cake,
   CalendarDays,
   ListTodo,
@@ -50,9 +51,32 @@ export default function OverviewPage() {
   const logsToday = logs.filter((log) => log.timestamp >= startOfDay).length;
   const recentLogs = [...logs].sort((a, b) => b.timestamp - a.timestamp).slice(0, 8);
 
+  const backupFailing = status?.lastBackupOk === false;
+
   return (
     <>
       <ConfigWarning />
+
+      {backupFailing && (
+        <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-900/60 bg-amber-950/30 p-4">
+          <AlertTriangle size={18} className="mt-0.5 shrink-0 text-amber-400" />
+          <div className="text-sm">
+            <p className="font-medium text-amber-200">Backup della sessione WhatsApp non riuscito</p>
+            <p className="mt-1 text-amber-200/70">
+              Il bot è {presence === 'online' ? 'operativo' : 'nello stato qui sotto'}, ma l&apos;ultimo
+              salvataggio della sessione è fallito
+              {status?.lastBackupAt ? ` (${timeAgo(status.lastBackupAt)})` : ''}. Se continua, un
+              riavvio richiederà una nuova scansione del QR.
+              {status?.lastBackupError ? (
+                <>
+                  {' '}
+                  <code className="font-mono text-xs">{status.lastBackupError}</code>
+                </>
+              ) : null}
+            </p>
+          </div>
+        </div>
+      )}
 
       <PageHeader
         title="Overview"
@@ -129,6 +153,17 @@ export default function OverviewPage() {
               value={status?.state ?? 'sconosciuto'}
               mono
             />
+            <InfoRow
+              label="Backup sessione"
+              value={
+                status?.lastBackupAt
+                  ? backupFailing
+                    ? `fallito · ${timeAgo(status.lastBackupAt)}`
+                    : timeAgo(status.lastBackupAt)
+                  : '—'
+              }
+              tone={backupFailing ? 'warn' : undefined}
+            />
           </div>
         </div>
       </div>
@@ -181,11 +216,29 @@ export default function OverviewPage() {
   );
 }
 
-function InfoRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+function InfoRow({
+  label,
+  value,
+  mono,
+  tone,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+  tone?: 'warn';
+}) {
   return (
     <div className="card flex items-center justify-between px-4 py-3">
       <span className="text-xs text-zinc-500">{label}</span>
-      <span className={cx('text-xs text-zinc-300', mono && 'font-mono')}>{value}</span>
+      <span
+        className={cx(
+          'text-xs',
+          tone === 'warn' ? 'text-amber-400' : 'text-zinc-300',
+          mono && 'font-mono',
+        )}
+      >
+        {value}
+      </span>
     </div>
   );
 }

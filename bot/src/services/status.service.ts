@@ -60,6 +60,29 @@ export async function markDisconnected(reason: string): Promise<void> {
 }
 
 /**
+ * Registra l'esito dell'ultimo backup della sessione (RemoteAuth) su
+ * /bot_status. Di proposito NON tocca `connected`/`state`: quando il backup
+ * fallisce il bot è comunque operativo. Ma senza questi campi un backup che
+ * smette di funzionare resta invisibile — ed è così che il bot è rimasto
+ * offline per giorni senza che nulla lo segnalasse.
+ */
+export async function reportBackupResult(
+  result: { ok: true; durationMs: number } | { ok: false; error: unknown },
+): Promise<void> {
+  if (result.ok) {
+    await updateBotStatus({ lastBackupAt: Date.now(), lastBackupOk: true, lastBackupError: null });
+    return;
+  }
+
+  const message = result.error instanceof Error ? result.error.message : String(result.error);
+  await updateBotStatus({
+    lastBackupAt: Date.now(),
+    lastBackupOk: false,
+    lastBackupError: message.slice(0, 300),
+  });
+}
+
+/**
  * Heartbeat: aggiorna `lastSeen` a intervalli regolari. Se il processo muore di
  * colpo (crash, kill, VPS spenta) il campo smette di aggiornarsi e la dashboard
  * può mostrare "offline" anche senza un evento di disconnessione.

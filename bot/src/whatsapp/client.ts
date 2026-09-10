@@ -1,3 +1,4 @@
+import { promises as fsp } from 'node:fs';
 import path from 'node:path';
 import { Client, RemoteAuth } from 'whatsapp-web.js';
 import qrcode from 'qrcode';
@@ -8,6 +9,7 @@ import {
   markConnected,
   markDisconnected,
   publishQrCode,
+  reportBackupResult,
   updateBotStatus,
 } from '../services/status.service';
 import { createLogger } from '../utils/logger';
@@ -15,6 +17,19 @@ import { phoneFromId } from '../utils/text';
 import { createFileSessionStore } from './sessionStore';
 
 const log = createLogger('whatsapp');
+
+/**
+ * Metodi e proprietà interni di `RemoteAuth` che non sono nei tipi pubblici di
+ * whatsapp-web.js ma che `ResilientRemoteAuth` deve poter chiamare/ridefinire.
+ */
+declare module 'whatsapp-web.js' {
+  interface RemoteAuth {
+    tempDir: string;
+    requiredDirs: string[];
+    storeRemoteSession(options?: { emit?: boolean }): Promise<void>;
+    copyByRequiredDirs(from: string, to: string): Promise<void>;
+  }
+}
 
 /**
  * Profilo Chromium: SEMPRE su disco locale/effimero, mai su `env.bot.sessionPath`
@@ -52,11 +67,118 @@ function webVersionOptions(): Record<string, unknown> {
   };
 }
 
+// Codici di errore del filesystem che, durante il backup, sono transitori: il
+// LevelDB di Chromium compatta di continuo, quindi i file compaiono e spariscono
+// sotto i piedi di `fs.cp`. Non sono guasti — il ciclo di backup successivo
+// ricopre la differenza.
+const TRANSIENT_FS_CODES = new Set(['ENOENT', 'EEXIST', 'ENOTEMPTY', 'EBUSY', 'EPERM']);
+
+function isTransientFsRace(error: unknown): boolean {
+  const code = (error as NodeJS.ErrnoException | null)?.code;
+  return code !== undefined && TRANSIENT_FS_CODES.has(code);
+}
+
+async function pathExists(target: string): Promise<boolean> {
+  try {
+    await fsp.access(target);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * `RemoteAuth` fa il backup della sessione copiando il profilo Chromium *vivo*
+ * (`fs.cp` ricorsiva di `Default/IndexedDB`, cioè il LevelDB) in una cartella di
+ * staging e zippandola. Ma mentre Chromium compatta il LevelDB i file `.ldb`
+ * spariscono e si ricreano mentre `fs.cp` li sta leggendo → `ENOENT` su
+ * chmod/copyfile, `EEXIST` su mkdir, `ENOTEMPTY` su rmdir. Questi errori nascono
+ * in un `setInterval` interno senza `catch`: diventano `unhandledRejection`,
+ * intasano i log e — se lo staging resta sporco da un run precedente ucciso a
+ * metà — si ripetono a ogni ciclo finché il processo non muore. È esattamente
+ * ciò che ha tenuto il bot offline per giorni (log del 2026-09-06).
+ *
+ * Questa sottoclasse rende il backup best-effort:
+ *  - guardia anti-rientro: se il ciclo precedente è ancora in corso, salta;
+ *  - ripulisce lo staging lasciato da un processo terminato durante un backup;
+ *  - copia ogni directory richiesta in modo indipendente, con qualche retry, e
+ *    tollera le race transitorie del filesystem;
+ *  - non rilancia mai: un backup fallito non deve buttare giù il bot. L'esito
+ *    finisce su /bot_status così la dashboard mostra se smette di funzionare.
+ */
+class ResilientRemoteAuth extends RemoteAuth {
+  private backupInFlight = false;
+  private lastCopyDegraded = false;
+
+  override async storeRemoteSession(options?: { emit?: boolean }): Promise<void> {
+    if (this.backupInFlight) {
+      log.warn('Backup sessione: il ciclo precedente è ancora in corso, salto questo giro');
+      return;
+    }
+    this.backupInFlight = true;
+    const startedAt = Date.now();
+    try {
+      // Uno staging tree rimasto da un processo ucciso durante un backup fa
+      // fallire ogni `fs.cp` successivo con EEXIST all'infinito: azzeralo prima.
+      await fsp.rm(this.tempDir, { recursive: true, force: true, maxRetries: 4 }).catch(() => {});
+      this.lastCopyDegraded = false;
+
+      await super.storeRemoteSession(options);
+
+      if (this.lastCopyDegraded) {
+        await reportBackupResult({
+          ok: false,
+          error: new Error(
+            'backup salvato ma incompleto: race del filesystem sul profilo Chromium',
+          ),
+        });
+      } else {
+        await reportBackupResult({ ok: true, durationMs: Date.now() - startedAt });
+      }
+    } catch (error) {
+      log.error('Backup della sessione WhatsApp fallito (il bot resta operativo)', error);
+      await reportBackupResult({ ok: false, error });
+    } finally {
+      this.backupInFlight = false;
+    }
+  }
+
+  override async copyByRequiredDirs(from: string, to: string): Promise<void> {
+    for (const dir of this.requiredDirs) {
+      const src = path.join(from, dir);
+      if (!(await pathExists(src))) continue;
+      const dest = path.join(to, path.basename(src));
+
+      for (let attempt = 1; attempt <= 3; attempt += 1) {
+        try {
+          await fsp.cp(src, dest, { recursive: true, force: true, errorOnExist: false });
+          break;
+        } catch (error) {
+          if (!isTransientFsRace(error)) throw error;
+          if (attempt === 3) {
+            this.lastCopyDegraded = true;
+            log.warn(
+              `Backup sessione: copia di "${dir}" ancora incoerente dopo 3 tentativi ` +
+                `(${(error as NodeJS.ErrnoException).code}); si completa al ciclo successivo`,
+            );
+            break;
+          }
+          await delay(1500);
+        }
+      }
+    }
+  }
+}
+
 export function createWhatsAppClient(): Client {
   const store = createFileSessionStore(env.bot.sessionPath, REMOTE_AUTH_DATA_PATH);
 
   return new Client({
-    authStrategy: new RemoteAuth({
+    authStrategy: new ResilientRemoteAuth({
       clientId: env.bot.clientId,
       dataPath: REMOTE_AUTH_DATA_PATH,
       store,

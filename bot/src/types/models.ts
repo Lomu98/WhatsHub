@@ -14,6 +14,14 @@ export interface BotStatus {
   pushName?: string | null;
   message?: string | null;
   startedAt?: number;
+  /**
+   * Esito dell'ultimo backup della sessione RemoteAuth. Non influenza
+   * `connected`: serve solo a rendere visibile un backup che smette di
+   * funzionare invece di lasciarlo fallire in silenzio.
+   */
+  lastBackupAt?: number;
+  lastBackupOk?: boolean;
+  lastBackupError?: string | null;
 }
 
 /** /commands/{commandId} */
